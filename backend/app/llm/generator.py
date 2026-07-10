@@ -81,7 +81,8 @@ class AnswerGenerator:
             citations.append({
                 "book_name": chunk["book_name"],
                 "page_number": chunk["page_number"],
-                "snippet": chunk["text"][:150] + "..."  # Brief snippet for UI
+                "snippet": chunk["text"][:150] + "...",  # Brief snippet for UI
+                "filename": chunk.get("filename", "")
             })
             
         return {

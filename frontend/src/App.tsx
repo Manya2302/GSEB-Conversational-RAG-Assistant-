@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Menu, Loader2, Mic, MicOff, Download } from 'lucide-react';
+import { Send, Menu, Loader2, Mic, MicOff, Download, X } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatMessage from './components/ChatMessage';
 import UploadModal from './components/UploadModal';
@@ -23,6 +23,7 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [activeCitation, setActiveCitation] = useState<any | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -163,8 +164,51 @@ function App() {
           </button>
         </header>
 
+        {/* PDF / Citation Modal */}
+        {activeCitation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-8">
+            <div className="bg-[#2A2B32] w-full max-w-5xl h-full max-h-[85vh] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-white/10">
+              <div className="flex justify-between items-center p-4 border-b border-border/50 bg-[#1E1E24]">
+                <h2 className="text-sm font-semibold text-gray-200">
+                  {activeCitation.book_name} - Page {activeCitation.page_number}
+                </h2>
+                <button onClick={() => setActiveCitation(null)} className="p-1 hover:bg-white/10 rounded-md transition-colors text-gray-400">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                {/* Source Snippet Panel */}
+                <div className="w-full md:w-1/3 p-6 bg-[#2A2B32] overflow-y-auto border-r border-border/50">
+                  <h3 className="text-xs font-bold uppercase text-accent mb-4">Extracted Context</h3>
+                  <p className="text-sm text-gray-200 leading-relaxed bg-[#1E1E24] p-4 rounded-md shadow-inner italic border-l-4 border-accent">
+                    "{activeCitation.snippet}"
+                  </p>
+                  <p className="text-xs text-gray-500 mt-6">
+                    This snippet was dynamically retrieved and provided to the AI to answer your question.
+                  </p>
+                </div>
+                {/* PDF Viewer Panel */}
+                <div className="w-full md:w-2/3 h-full bg-[#1E1E24]">
+                  {activeCitation.filename ? (
+                    <iframe 
+                      src={`http://localhost:8000/pdfs/${activeCitation.filename}#page=${activeCitation.page_number}`} 
+                      className="w-full h-full border-none"
+                      title="PDF Viewer"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+                      <p>PDF preview not available for this source.</p>
+                      <p className="text-xs mt-2">Ensure the file was uploaded recently with the new PDF tracking feature.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scroll-smooth pb-32">
           {messages.map((msg, idx) => (
             <ChatMessage 
               key={idx} 
@@ -174,6 +218,7 @@ function App() {
               metrics={msg.metrics}
               suggested_questions={msg.suggested_questions}
               onQuestionClick={(q) => handleSendMessage(undefined, q)}
+              onCitationClick={(cite) => setActiveCitation(cite)}
             />
           ))}
           <div ref={bottomRef} className="h-32" /> {/* Spacer */}

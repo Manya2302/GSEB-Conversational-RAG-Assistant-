@@ -6,6 +6,7 @@ interface Citation {
   book_name: string;
   page_number: number;
   snippet: string;
+  filename?: string;
 }
 
 interface ChatMessageProps {
@@ -18,9 +19,12 @@ interface ChatMessageProps {
   };
   suggested_questions?: string[];
   onQuestionClick?: (q: string) => void;
+  onCitationClick?: (citation: Citation) => void;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, citations, metrics, suggested_questions, onQuestionClick }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  role, content, citations, metrics, suggested_questions, onQuestionClick, onCitationClick 
+}) => {
   const isUser = role === 'user';
   
   return (
@@ -43,7 +47,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, citations, met
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {citations.map((cite, idx) => (
-                  <div key={idx} className="bg-[#2A2B32] p-3 rounded-md border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
+                  <div 
+                    key={idx} 
+                    onClick={() => onCitationClick?.(cite)}
+                    className="bg-[#2A2B32] p-3 rounded-md border border-white/5 hover:border-white/10 transition-colors cursor-pointer group"
+                  >
                     <div className="text-xs font-medium text-gray-300 mb-1 line-clamp-1">{cite.book_name}</div>
                     <div className="text-[10px] text-accent mb-2">Page {cite.page_number}</div>
                     <div className="text-xs text-gray-500 italic line-clamp-3 group-hover:text-gray-400 transition-colors">

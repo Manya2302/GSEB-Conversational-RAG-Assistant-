@@ -35,7 +35,8 @@ async def upload_document(
         "book_name": book_name,
         "subject": subject,
         "standard": standard,
-        "chapter": chapter
+        "chapter": chapter,
+        "filename": file.filename
     }
     
     # Store chunks in vector database in the background
