@@ -10,6 +10,11 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   citations?: any[];
+  metrics?: {
+    retrieval_time_sec: number;
+    generation_time_sec: number;
+  };
+  suggested_questions?: string[];
 }
 
 function App() {
@@ -21,6 +26,7 @@ function App() {
     {
       role: 'assistant',
       content: 'Hello! I am your AI Textbook Assistant. You can ask me questions about any of the uploaded textbooks, and I will provide answers with exact citations and page numbers.',
+      suggested_questions: ["What is Cell Division?", "Explain the process of photosynthesis"]
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,25 +38,28 @@ function App() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
+  const handleSendMessage = async (e?: React.FormEvent, directInput?: string) => {
+    if (e) e.preventDefault();
+    
+    const inputToUse = directInput || inputValue;
+    if (!inputToUse.trim() || isLoading) return;
 
-    const currentInput = inputValue;
     // Add user message
-    const userMsg: Message = { role: 'user', content: currentInput };
+    const userMsg: Message = { role: 'user', content: inputToUse };
     setMessages(prev => [...prev, userMsg]);
-    setInputValue('');
+    if (!directInput) setInputValue('');
     setIsLoading(true);
 
     try {
-      const response = await chatWithAssistant(currentInput, sessionId);
+      const response = await chatWithAssistant(inputToUse, sessionId);
       setSessionId(response.session_id);
       
       const botMsg: Message = {
         role: 'assistant',
         content: response.answer,
-        citations: response.citations
+        citations: response.citations,
+        metrics: response.metrics,
+        suggested_questions: response.suggested_questions
       };
       setMessages(prev => [...prev, botMsg]);
     } catch (error: any) {
@@ -94,6 +103,9 @@ function App() {
               role={msg.role} 
               content={msg.content} 
               citations={msg.citations} 
+              metrics={msg.metrics}
+              suggested_questions={msg.suggested_questions}
+              onQuestionClick={(q) => handleSendMessage(undefined, q)}
             />
           ))}
           <div ref={bottomRef} className="h-32" /> {/* Spacer */}

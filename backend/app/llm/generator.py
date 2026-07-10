@@ -55,9 +55,18 @@ class AnswerGenerator:
         
         logger.info(f"Calling LLM with {len(retrieved_chunks)} context chunks.")
         response = self.llm.invoke(messages)
+        raw_content = response.content
+        
+        # Parse suggested questions if present
+        answer_text = raw_content
+        suggested_questions = []
+        if "SUGGESTED_QUESTIONS:" in raw_content:
+            parts = raw_content.split("SUGGESTED_QUESTIONS:")
+            answer_text = parts[0].strip()
+            suggestions_raw = parts[1].strip()
+            suggested_questions = [q.strip() for q in suggestions_raw.split("|") if q.strip()]
         
         # Prepare the structured response
-        # Citations are also included directly from the context for the UI
         citations = []
         for chunk in retrieved_chunks:
             citations.append({
@@ -67,6 +76,7 @@ class AnswerGenerator:
             })
             
         return {
-            "answer": response.content,
-            "citations": citations
+            "answer": answer_text,
+            "citations": citations,
+            "suggested_questions": suggested_questions
         }

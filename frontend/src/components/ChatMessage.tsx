@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import { User, BookOpen } from 'lucide-react';
+import { User, BookOpen, Zap, MessageCircle } from 'lucide-react';
 
 interface Citation {
   book_name: string;
@@ -12,9 +12,15 @@ interface ChatMessageProps {
   role: 'user' | 'assistant';
   content: string;
   citations?: Citation[];
+  metrics?: {
+    retrieval_time_sec: number;
+    generation_time_sec: number;
+  };
+  suggested_questions?: string[];
+  onQuestionClick?: (q: string) => void;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, citations }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, citations, metrics, suggested_questions, onQuestionClick }) => {
   const isUser = role === 'user';
   
   return (
@@ -46,6 +52,34 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, citations }) =
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {suggested_questions && suggested_questions.length > 0 && (
+            <div className="mt-4 pt-2">
+              <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider flex items-center gap-2">
+                <MessageCircle size={14} /> Suggested Follow-ups
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {suggested_questions.map((q, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => onQuestionClick?.(q)}
+                    className="text-xs bg-[#2A2B32] border border-white/10 hover:border-accent hover:text-accent text-gray-300 px-3 py-1.5 rounded-full transition-colors text-left"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {metrics && (
+            <div className="mt-2 pt-2 flex items-center gap-2 text-[10px] text-gray-500 font-mono">
+              <Zap size={10} className="text-yellow-500" />
+              <span>Retrieved in {metrics.retrieval_time_sec}s</span>
+              <span className="text-gray-600">|</span>
+              <span>Generated in {metrics.generation_time_sec}s</span>
             </div>
           )}
         </div>

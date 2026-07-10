@@ -40,6 +40,9 @@ async def chat_with_books(request: ChatRequest):
     session_id = request.session_id or str(uuid.uuid4())
     logger.info(f"Received chat query: {request.query} for session: {session_id}")
     
+    import time
+    start_time = time.time()
+    
     # 1. Rewrite Query (Memory)
     standalone_query = memory_manager.rewrite_query(session_id, request.query)
     
@@ -56,6 +59,7 @@ async def chat_with_books(request: ChatRequest):
     try:
         # 3. Retrieve Context (Fetch more for reranking)
         fetch_k = request.top_k * 3 if reranker else request.top_k
+        retrieval_start = time.time()
         retrieved_chunks = retriever.search(
             query=standalone_query, 
             top_k=fetch_k, 
@@ -69,8 +73,11 @@ async def chat_with_books(request: ChatRequest):
                 chunks=retrieved_chunks,
                 top_k=request.top_k
             )
+        retrieval_time = time.time() - retrieval_start
         
         # 5. Generate Answer
+        generation_start = time.time()
+        suggested_questions = []
         if not retrieved_chunks:
             answer = "The information is not available in the provided textbooks."
             citations = []
@@ -81,8 +88,11 @@ async def chat_with_books(request: ChatRequest):
             )
             answer = result["answer"]
             citations = result["citations"]
+            suggested_questions = result.get("suggested_questions", [])
             
-        # 4. Save to Memory
+        generation_time = time.time() - generation_start
+        
+        # 6. Save to Memory
         memory_manager.add_message(session_id, "user", request.query)
         memory_manager.add_message(session_id, "assistant", answer)
         
@@ -90,7 +100,12 @@ async def chat_with_books(request: ChatRequest):
             "session_id": session_id,
             "answer": answer,
             "citations": citations,
-            "rewritten_query": standalone_query
+            "suggested_questions": suggested_questions,
+            "rewritten_query": standalone_query,
+            "metrics": {
+                "retrieval_time_sec": round(retrieval_time, 2),
+                "generation_time_sec": round(generation_time, 2)
+            }
         }
         
     except Exception as e:
