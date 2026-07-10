@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import logger
+from app.api.upload import router as upload_router
 
 app = FastAPI(
     title="Conversational RAG API",
@@ -16,6 +17,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(upload_router)
+
 
 @app.get("/")
 def read_root():
