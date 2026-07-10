@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, UploadCloud, Loader2 } from 'lucide-react';
+import { uploadDocument } from '../services/api';
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose }) => {
   const [subject, setSubject] = useState('');
   const [standard, setStandard] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState('');
 
   if (!isOpen) return null;
 
@@ -20,15 +22,23 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose }) => {
     if (!file || !bookName) return;
     
     setIsUploading(true);
-    // Simulate upload delay for UI demonstration
-    setTimeout(() => {
+    setUploadMessage('');
+    try {
+      await uploadDocument(file, bookName, subject, standard);
+      setUploadMessage('Upload successful! Processing in background.');
+      setTimeout(() => {
+        setIsUploading(false);
+        onClose();
+        setFile(null);
+        setBookName('');
+        setSubject('');
+        setStandard('');
+        setUploadMessage('');
+      }, 1500);
+    } catch (err: any) {
+      setUploadMessage(`Error: ${err.message}`);
       setIsUploading(false);
-      onClose();
-      setFile(null);
-      setBookName('');
-      setSubject('');
-      setStandard('');
-    }, 2000);
+    }
   };
 
   return (
@@ -95,22 +105,29 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="px-4 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              disabled={isUploading || !file || !bookName}
-              className="px-4 py-2 bg-accent hover:bg-[#1a7f64] disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm font-medium text-white transition-colors flex items-center gap-2"
-            >
-              {isUploading && <Loader2 size={16} className="animate-spin" />}
-              {isUploading ? 'Processing...' : 'Upload & Process'}
-            </button>
+          <div className="pt-2 flex flex-col items-end gap-3">
+            {uploadMessage && (
+              <div className={`text-xs ${uploadMessage.includes('Error') ? 'text-red-400' : 'text-accent'}`}>
+                {uploadMessage}
+              </div>
+            )}
+            <div className="flex justify-end gap-3 w-full">
+              <button 
+                type="button" 
+                onClick={onClose}
+                className="px-4 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={isUploading || !file || !bookName}
+                className="px-4 py-2 bg-accent hover:bg-[#1a7f64] disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-sm font-medium text-white transition-colors flex items-center gap-2"
+              >
+                {isUploading && <Loader2 size={16} className="animate-spin" />}
+                {isUploading ? 'Processing...' : 'Upload & Process'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

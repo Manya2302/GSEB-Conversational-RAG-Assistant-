@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Menu } from 'lucide-react';
+import { Send, Menu, Loader2 } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatMessage from './components/ChatMessage';
 import UploadModal from './components/UploadModal';
+
+import { chatWithAssistant } from './services/api';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,12 +16,14 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
       content: 'Hello! I am your AI Textbook Assistant. You can ask me questions about any of the uploaded textbooks, and I will provide answers with exact citations and page numbers.',
     }
   ]);
+  const [isLoading, setIsLoading] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -28,30 +32,35 @@ function App() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
+    const currentInput = inputValue;
     // Add user message
-    const userMsg: Message = { role: 'user', content: inputValue };
+    const userMsg: Message = { role: 'user', content: currentInput };
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
+    setIsLoading(true);
 
-    // Simulate AI response for UI demonstration
-    setTimeout(() => {
+    try {
+      const response = await chatWithAssistant(currentInput, sessionId);
+      setSessionId(response.session_id);
+      
       const botMsg: Message = {
         role: 'assistant',
-        content: 'Cell division is the process by which a parent cell divides into two or more daughter cells. It is essential for growth, reproduction, and repair in organisms. The two main types of cell division are mitosis and meiosis.',
-        citations: [
-          {
-            book_name: 'NCERT Biology Class 10',
-            page_number: 45,
-            snippet: 'Cell division is the biological basis of life growth and reproduction...'
-          }
-        ]
+        content: response.answer,
+        citations: response.citations
       };
       setMessages(prev => [...prev, botMsg]);
-    }, 1000);
+    } catch (error: any) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Error: ${error.message || 'Failed to get answer'}`
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -97,6 +106,7 @@ function App() {
               <textarea 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                disabled={isLoading}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -104,16 +114,16 @@ function App() {
                   }
                 }}
                 placeholder="Ask about your textbooks..."
-                className="w-full max-h-[200px] bg-transparent resize-none overflow-y-auto outline-none py-4 pl-4 pr-12 text-sm text-gray-100 placeholder-gray-400"
+                className="w-full max-h-[200px] bg-transparent resize-none overflow-y-auto outline-none py-4 pl-4 pr-12 text-sm text-gray-100 placeholder-gray-400 disabled:opacity-50"
                 rows={1}
                 style={{ minHeight: '56px' }}
               />
               <button 
                 type="submit"
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isLoading}
                 className="absolute bottom-3 right-3 p-1.5 rounded-md bg-accent text-white disabled:bg-gray-600 disabled:text-gray-400 transition-colors"
               >
-                <Send size={16} />
+                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
             </form>
             <div className="text-center mt-3 text-xs text-gray-500">
