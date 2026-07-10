@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import logger
 from app.api.upload import router as upload_router
+from app.api.retrieval import router as retrieval_router
 
 app = FastAPI(
     title="Conversational RAG API",
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(upload_router)
+app.include_router(retrieval_router)
 
 
 @app.get("/")
