@@ -15,9 +15,9 @@ class DocumentChunker:
         document_chunks = []
         
         for i, chunk_text in enumerate(chunks):
-            # Generate a unique ID based on book name, page, and a short UUID
+            # Generate a deterministic ID based on book name, page, and chunk index
             safe_book_name = str(base_metadata.get('book_name', 'unknown')).replace(" ", "_")
-            chunk_id = f"{safe_book_name}_p{page_number}_c{i}_{uuid.uuid4().hex[:8]}"
+            chunk_id = f"{safe_book_name}_p{page_number}_c{i}"
             
             metadata = ChunkMetadata(
                 book_name=base_metadata.get("book_name", "Unknown"),

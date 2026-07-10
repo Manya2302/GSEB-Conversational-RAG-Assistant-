@@ -38,20 +38,21 @@ async def upload_document(
         "chapter": chapter
     }
     
-    # Process the PDF synchronously for now, 
-    # to return the number of chunks created.
-    try:
-        chunks = pdf_processor.process_pdf(str(file_path), metadata)
-        
-        # We would store these chunks in a vector DB here (Phase 3)
-        # For now we just return the counts
-        
-        return {
-            "message": "File processed successfully",
-            "filename": file.filename,
-            "chunks_created": len(chunks),
-            "metadata_extracted": metadata
-        }
-    except Exception as e:
-        logger.error(f"Processing failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+    # Store chunks in vector database in the background
+    def process_and_store(file_path_str: str, meta: dict):
+        try:
+            chunks = pdf_processor.process_pdf(file_path_str, meta)
+            from app.embeddings.vector_store import VectorStore
+            vector_store = VectorStore()
+            vector_store.add_chunks(chunks)
+        except Exception as e:
+            logger.error(f"Error in background processing: {str(e)}")
+
+    background_tasks.add_task(process_and_store, str(file_path), metadata)
+    
+    return {
+        "message": "File processing started in the background",
+        "filename": file.filename,
+        "metadata_extracted": metadata
+    }
+
