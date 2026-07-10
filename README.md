@@ -3,19 +3,20 @@
 An enterprise-grade, Multi-Agent Conversational Retrieval-Augmented Generation (RAG) system built to parse textbooks, securely index them, and generate highly accurate, cited answers to user questions.
 
 ## 🌟 Key Features
-- **Intelligent Processing**: Automatically cleans and splits PDFs into manageable chunks with semantic meaning.
-- **Advanced Retrieval**: Utilizes a combination of Qdrant dense vector search, LLM-based query routing, and Cross-Encoder Re-ranking to guarantee high-precision context retrieval.
+- **Intelligent Multimodal Processing**: Automatically cleans and splits PDFs into chunks. Uses PyMuPDF for text, and a dual-pipeline of **EasyOCR (Gujarati/Hindi/English)** + **Groq Vision** for diagram understanding.
+- **Advanced Hybrid Retrieval**: Utilizes Qdrant dense vector search, LLM-based query routing for metadata filtering, and Cross-Encoder Re-ranking to guarantee high-precision context retrieval.
 - **Conversational Memory**: Remembers past user queries and rewrites follow-up questions for contextual accuracy.
-- **Premium UI/UX**: Built with React and Tailwind CSS, featuring a sleek, ChatGPT-style glassmorphism interface, real-time typing indicators, and inline citations.
-- **Performance Optimized**: Includes embedding caching, async PDF processing, and full Docker support.
+- **Premium UI/UX**: Built with React and Tailwind CSS, featuring native Speech-to-Text Voice Input, Chat Exports, real-time latency tracking, and inline interactive citations.
+- **Interactive Source Verification**: Clicking a citation opens a modal highlighting the exact context snippet alongside an interactive PDF Viewer snapped to the exact source page.
+- **Extreme Performance**: Features sub-10s latency via Groq LPUs, async multimodal processing, and embedding LRU caching.
 
 ## 🛠 Tech Stack
-- **Backend:** FastAPI, Python 3.12
-- **Frontend:** React, Vite, Tailwind CSS (v3)
+- **Backend:** FastAPI, Python 3.12, EasyOCR, OpenCV
+- **Frontend:** React, Vite, Tailwind CSS (v4)
 - **Vector Database:** Qdrant (Local Docker or Memory)
 - **Embeddings:** `BAAI/bge-small-en-v1.5` via HuggingFace
 - **Reranker:** `cross-encoder/ms-marco-MiniLM-L-6-v2`
-- **LLM:** Gemini (1.5 Pro) / OpenAI (GPT-4o)
+- **LLMs:** Groq (`llama3-8b-8192` & `llama-3.2-11b-vision-preview`), Gemini 1.5 Pro, OpenAI (GPT-4o)
 
 ## 📁 Folder Structure
 ```text
