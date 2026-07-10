@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     GEMINI_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
     QDRANT_API_KEY: str = ""

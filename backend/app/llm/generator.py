@@ -8,7 +8,16 @@ logger = logging.getLogger(__name__)
 class AnswerGenerator:
     def __init__(self):
         # Determine which LLM to use based on env vars
-        if settings.GEMINI_API_KEY:
+        # Prioritize Groq for extreme speed as requested
+        if settings.GROQ_API_KEY:
+            from langchain_groq import ChatGroq
+            logger.info("Initializing Groq model for fast inference")
+            self.llm = ChatGroq(
+                model_name="llama3-8b-8192", 
+                groq_api_key=settings.GROQ_API_KEY,
+                temperature=0.1
+            )
+        elif settings.GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
             logger.info("Initializing Gemini model")
             self.llm = ChatGoogleGenerativeAI(
