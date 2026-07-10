@@ -1,4 +1,4 @@
-# Conversational RAG Application 📚
+# GSEB Conversational RAG Assistant 📚
 
 An enterprise-grade, Multi-Agent Conversational Retrieval-Augmented Generation (RAG) system built to parse textbooks, securely index them, and generate highly accurate, cited answers to user questions.
 
