@@ -79,7 +79,7 @@ async def chat_with_books(request: ChatRequest):
         generation_start = time.time()
         suggested_questions = []
         if not retrieved_chunks:
-            answer = "The information is not available in the provided textbooks."
+            answer = "The information is unavailable in the knowledge base."
             citations = []
         else:
             result = generator.generate_answer(
