@@ -1,8 +1,8 @@
-# GSEB Conversational RAG Assistant 📚
+# GSEB Conversational RAG Assistant 
 
 An enterprise-grade, Multi-Agent Conversational Retrieval-Augmented Generation (RAG) system built to parse textbooks, securely index them, and generate highly accurate, cited answers to user questions.
 
-## 🌟 Key Features
+##  Key Features
 - **Intelligent Multimodal Processing**: Automatically cleans and splits PDFs into chunks. Uses PyMuPDF for text, and a dual-pipeline of **EasyOCR (Gujarati/Hindi/English)** + **Groq Vision** for diagram understanding.
 - **Advanced Hybrid Retrieval**: Utilizes Qdrant dense vector search, LLM-based query routing for metadata filtering, and Cross-Encoder Re-ranking to guarantee high-precision context retrieval.
 - **Conversational Memory**: Remembers past user queries and rewrites follow-up questions for contextual accuracy.
@@ -10,7 +10,7 @@ An enterprise-grade, Multi-Agent Conversational Retrieval-Augmented Generation (
 - **Interactive Source Verification**: Clicking a citation opens a modal highlighting the exact context snippet alongside an interactive PDF Viewer snapped to the exact source page.
 - **Extreme Performance**: Features sub-10s latency via Groq LPUs, async multimodal processing, and embedding LRU caching.
 
-## 🛠 Tech Stack
+##  Tech Stack
 - **Backend:** FastAPI, Python 3.12, EasyOCR, OpenCV
 - **Frontend:** React, Vite, Tailwind CSS (v4)
 - **Vector Database:** Qdrant (Local Docker or Memory)
@@ -18,7 +18,7 @@ An enterprise-grade, Multi-Agent Conversational Retrieval-Augmented Generation (
 - **Reranker:** `cross-encoder/ms-marco-MiniLM-L-6-v2`
 - **LLMs:** Groq (`llama3-8b-8192` & `llama-3.2-11b-vision-preview`), Gemini 1.5 Pro, OpenAI (GPT-4o)
 
-## 📁 Folder Structure
+##  Folder Structure
 ```text
 conversational-rag/
 │
@@ -51,7 +51,7 @@ conversational-rag/
 └── README.md
 ```
 
-## 🚀 Setup & Installation
+##  Setup & Installation
 
 ### Option 1: Docker (Recommended)
 Make sure you have Docker and Docker Compose installed.
@@ -76,7 +76,7 @@ Make sure you have Docker and Docker Compose installed.
 2. Install dependencies: `npm install`
 3. Start the dev server: `npm run dev`
 
-## 📖 API Endpoints
+##  API Endpoints
 - `POST /api/v1/upload/`: Uploads a PDF with metadata and processes it asynchronously.
 - `POST /api/v1/chat/`: Core RAG endpoint. Accepts `{ session_id, query, top_k }`. Returns LLM answer with strict book citations.
 - `POST /api/v1/retrieval/`: Raw semantic search endpoint (helpful for debugging retrieval accuracy without LLM generation).
