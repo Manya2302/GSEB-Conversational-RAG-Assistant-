@@ -15,8 +15,8 @@ class SemanticRetriever:
         """
         logger.info(f"Retrieving top {top_k} chunks for query: '{query}'")
         
-        # Embed the query string
-        query_vector = self.vector_store.embedder.embed_query(query)
+        # Embed the query string using the cache to save compute on repeated queries
+        query_vector = self.vector_store.embedder.embed_query_cached(query)
         
         # Build Qdrant metadata filters if provided
         qdrant_filter = None

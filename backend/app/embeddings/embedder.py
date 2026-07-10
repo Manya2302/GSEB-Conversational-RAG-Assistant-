@@ -1,4 +1,5 @@
 from langchain_huggingface import HuggingFaceEmbeddings
+from functools import lru_cache
 
 class Embedder:
     def __init__(self):
@@ -20,3 +21,8 @@ class Embedder:
         
     def embed_query(self, text: str) -> list[float]:
         return self.embeddings.embed_query(text)
+        
+    @lru_cache(maxsize=1000)
+    def embed_query_cached(self, text: str) -> list[float]:
+        """Cached version of query embedding to improve performance on repeated queries."""
+        return self.embed_query(text)
