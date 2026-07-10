@@ -4,6 +4,8 @@ from typing import Optional
 from app.retrieval.retriever import SemanticRetriever
 from app.llm.generator import AnswerGenerator
 from app.memory.manager import MemoryManager
+from app.retrieval.router import QueryRouter
+from app.retrieval.reranker import CrossEncoderReranker
 import logging
 import uuid
 
@@ -13,6 +15,15 @@ router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 retriever = SemanticRetriever()
 generator = AnswerGenerator()
 memory_manager = MemoryManager()
+query_router = QueryRouter()
+
+# Reranker takes a few seconds to load models, so load globally
+# Using a try/except so app doesn't crash if models aren't downloaded yet
+try:
+    reranker = CrossEncoderReranker()
+except Exception as e:
+    logger.warning(f"Could not load reranker: {e}")
+    reranker = None
 
 class ChatRequest(BaseModel):
     session_id: Optional[str] = None
@@ -32,21 +43,34 @@ async def chat_with_books(request: ChatRequest):
     # 1. Rewrite Query (Memory)
     standalone_query = memory_manager.rewrite_query(session_id, request.query)
     
-    # 2. Retrieve Context
-    filters = {}
+    # 2. Advanced Routing (Dynamic Metadata Filtering)
+    dynamic_filters = query_router.route_query(standalone_query)
+    
+    # Merge explicit and dynamic filters
+    filters = {**dynamic_filters}
     if request.book_name:
         filters["book_name"] = request.book_name
     if request.subject:
         filters["subject"] = request.subject
         
     try:
+        # 3. Retrieve Context (Fetch more for reranking)
+        fetch_k = request.top_k * 3 if reranker else request.top_k
         retrieved_chunks = retriever.search(
             query=standalone_query, 
-            top_k=request.top_k, 
+            top_k=fetch_k, 
             filters=filters
         )
         
-        # 3. Generate Answer
+        # 4. Cross-Encoder Reranking
+        if reranker and retrieved_chunks:
+            retrieved_chunks = reranker.rerank(
+                query=standalone_query,
+                chunks=retrieved_chunks,
+                top_k=request.top_k
+            )
+        
+        # 5. Generate Answer
         if not retrieved_chunks:
             answer = "The information is not available in the provided textbooks."
             citations = []
