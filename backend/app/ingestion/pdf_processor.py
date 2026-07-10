@@ -6,6 +6,7 @@ from app.ingestion.text_cleaner import clean_text, is_empty_page
 from app.ingestion.chunker import DocumentChunker
 from app.models.document import DocumentChunk
 from app.ingestion.image_analyzer import ImageAnalyzer
+from app.ingestion.ocr import MultilingualOCR
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class PDFProcessor:
     def __init__(self):
         self.chunker = DocumentChunker()
         self.image_analyzer = ImageAnalyzer()
+        self.ocr = MultilingualOCR()
 
     async def process_pdf_async(self, file_path: str, metadata: Dict[str, Any]) -> List[DocumentChunk]:
         """
@@ -72,10 +74,21 @@ class PDFProcessor:
         return all_chunks
 
     async def _analyze_and_chunk_image(self, image_bytes: bytes, metadata: dict, page_number: int, img_index: int):
-        description = await self.image_analyzer.analyze_image_bytes(image_bytes)
-        if description:
+        # 1. Run local Multilingual OCR (for Gujarati, Hindi, English raw text)
+        ocr_text = self.ocr.extract_text_from_image(image_bytes)
+        
+        # 2. Run Groq Vision (for visual reasoning and diagram understanding)
+        vision_description = await self.image_analyzer.analyze_image_bytes(image_bytes)
+        
+        combined_text = ""
+        if vision_description:
+            combined_text += f"{vision_description}\n\n"
+        if ocr_text:
+            combined_text += f"[EXTRACTED TEXT (Gujarati/Hindi/English)]: {ocr_text}"
+            
+        if combined_text.strip():
             return self.chunker.create_chunks(
-                text=description,
+                text=combined_text.strip(),
                 base_metadata=metadata,
                 page_number=page_number
             )

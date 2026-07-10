@@ -22,6 +22,7 @@ function App() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [voiceLang, setVoiceLang] = useState('en-US');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState<any | null>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -85,6 +86,7 @@ function App() {
     
     recognition.continuous = false;
     recognition.interimResults = false;
+    recognition.lang = voiceLang; // Support for Gujarati, Hindi, English
     
     recognition.onstart = () => setIsListening(true);
     
@@ -243,6 +245,17 @@ function App() {
                 rows={1}
                 style={{ minHeight: '56px' }}
               />
+              <select 
+                value={voiceLang}
+                onChange={(e) => setVoiceLang(e.target.value)}
+                className="absolute bottom-4 right-20 bg-[#2A2B32] border border-white/10 text-xs text-gray-300 rounded px-2 py-1 outline-none hover:border-white/20 transition-colors"
+                title="Select Voice Language"
+              >
+                <option value="en-US">EN</option>
+                <option value="hi-IN">HI</option>
+                <option value="gu-IN">GU</option>
+              </select>
+              
               <button 
                 type="button"
                 onClick={handleVoiceInput}
