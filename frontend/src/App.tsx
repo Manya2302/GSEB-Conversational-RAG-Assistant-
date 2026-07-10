@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Menu, Loader2 } from 'lucide-react';
+import { Send, Menu, Loader2, Mic, MicOff, Download } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatMessage from './components/ChatMessage';
 import UploadModal from './components/UploadModal';
@@ -21,6 +21,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -72,6 +73,63 @@ function App() {
     }
   };
 
+  const handleVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech recognition is not supported in this browser.');
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    recognition.onstart = () => setIsListening(true);
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInputValue(transcript);
+      // Auto-send after a brief delay
+      setTimeout(() => handleSendMessage(undefined, transcript), 500);
+    };
+    
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+  };
+
+  const exportChat = () => {
+    let mdContent = '# RAG Textbook Chat Export\n\n';
+    messages.forEach(msg => {
+      mdContent += `### ${msg.role === 'user' ? '🧑 User' : '🤖 AI Assistant'}\n`;
+      mdContent += `${msg.content}\n\n`;
+      if (msg.citations && msg.citations.length > 0) {
+        mdContent += `**Sources:**\n`;
+        msg.citations.forEach(c => {
+          mdContent += `- *${c.book_name}* (Page ${c.page_number})\n`;
+        });
+        mdContent += '\n';
+      }
+      mdContent += '---\n\n';
+    });
+
+    const blob = new Blob([mdContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-export-${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex h-screen bg-background text-gray-100 overflow-hidden font-sans">
       {/* Sidebar - Desktop */}
@@ -85,14 +143,24 @@ function App() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
-        <header className="h-14 flex items-center px-4 border-b border-white/10 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+        <header className="h-14 border-b border-border/50 flex items-center justify-between px-4 sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 hover:bg-white/10 rounded-md md:hidden transition-colors"
+            >
+              <Menu size={20} />
+            </button>
+            <h1 className="font-semibold text-lg tracking-tight">AI Textbook Assistant</h1>
+          </div>
           <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 -ml-2 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            onClick={exportChat}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-md transition-colors border border-white/10"
+            title="Export Chat as Markdown"
           >
-            <Menu size={20} />
+            <Download size={14} />
+            <span className="hidden sm:inline">Export Chat</span>
           </button>
-          <h1 className="ml-2 font-medium text-sm text-gray-200">Conversational RAG</h1>
         </header>
 
         {/* Messages */}
@@ -130,6 +198,14 @@ function App() {
                 rows={1}
                 style={{ minHeight: '56px' }}
               />
+              <button 
+                type="button"
+                onClick={handleVoiceInput}
+                className={`absolute bottom-3 right-12 p-1.5 rounded-md transition-colors ${isListening ? 'bg-red-500/20 text-red-500 animate-pulse' : 'hover:bg-white/10 text-gray-400 hover:text-white'}`}
+                title="Voice Input"
+              >
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
               <button 
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
