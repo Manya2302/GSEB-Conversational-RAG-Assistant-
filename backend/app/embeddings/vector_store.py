@@ -12,11 +12,14 @@ class VectorStore:
     def __init__(self, collection_name: str = "textbooks"):
         self.collection_name = collection_name
         self.embedder = Embedder()
-        self.client = QdrantClient(
-            host=settings.QDRANT_HOST,
-            port=settings.QDRANT_PORT,
-            api_key=settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None
-        )
+        if settings.QDRANT_HOST == "memory":
+            self.client = QdrantClient(location=":memory:")
+        else:
+            self.client = QdrantClient(
+                host=settings.QDRANT_HOST,
+                port=settings.QDRANT_PORT,
+                api_key=settings.QDRANT_API_KEY if settings.QDRANT_API_KEY else None
+            )
         self._ensure_collection()
 
     def _ensure_collection(self):

@@ -3,6 +3,7 @@ import { Send, Menu, Loader2, Mic, MicOff, Download, X } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatMessage from './components/ChatMessage';
 import UploadModal from './components/UploadModal';
+import SettingsModal from './components/SettingsModal';
 
 import { chatWithAssistant } from './services/api';
 
@@ -20,18 +21,19 @@ interface Message {
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState('dark');
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [voiceLang, setVoiceLang] = useState('en-US');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [activeCitation, setActiveCitation] = useState<any | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Hello! I am your AI Textbook Assistant. You can ask me questions about any of the uploaded textbooks, and I will provide answers with exact citations and page numbers.',
-      suggested_questions: ["What is Cell Division?", "Explain the process of photosynthesis"]
-    }
-  ]);
+  const initialMessage: Message = {
+    role: 'assistant',
+    content: 'Hello! I am your AI Textbook Assistant. You can ask me questions about any of the uploaded textbooks, and I will provide answers with exact citations and page numbers.',
+    suggested_questions: ["What is Cell Division?", "Explain the process of photosynthesis"]
+  };
+  const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [isLoading, setIsLoading] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -40,6 +42,15 @@ function App() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Apply theme to document
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, [theme]);
 
   const handleSendMessage = async (e?: React.FormEvent, directInput?: string) => {
     if (e) e.preventDefault();
@@ -138,8 +149,10 @@ function App() {
       {/* Sidebar - Desktop */}
       <div className={`${isSidebarOpen ? 'w-[260px]' : 'w-0'} transition-all duration-300 ease-in-out shrink-0 overflow-hidden`}>
         <Sidebar 
-          onNewChat={() => setMessages([])} 
+          onNewChat={() => setMessages([initialMessage])} 
           onUploadClick={() => setIsUploadOpen(true)}
+          onClearConversations={() => setMessages([initialMessage])}
+          onSettingsClick={() => setIsSettingsOpen(true)}
         />
       </div>
 
@@ -282,6 +295,15 @@ function App() {
       <UploadModal 
         isOpen={isUploadOpen} 
         onClose={() => setIsUploadOpen(false)} 
+      />
+      
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        theme={theme}
+        setTheme={setTheme}
+        voiceLang={voiceLang}
+        setVoiceLang={setVoiceLang}
       />
     </div>
   );

@@ -9,7 +9,7 @@ class MultilingualOCR:
     def __init__(self):
         logger.info("Initializing EasyOCR for English, Hindi, and Gujarati...")
         # Include 'en', 'hi', and 'gu' (Gujarati)
-        self.reader = easyocr.Reader(['en', 'hi', 'gu'], gpu=False) # Fallback to CPU if no GPU
+        self.reader = easyocr.Reader(['en', 'hi'], gpu=False) # Fallback to CPU if no GPU
 
     def extract_text_from_image(self, image_bytes: bytes) -> str:
         """
